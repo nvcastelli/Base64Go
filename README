@@ -15,4 +15,4 @@ About the program:
 	This program runs in the command line. When executed the program prompts the user to enter text that they wish to encode into base64. Once entered and processed the console will show: the text the user entered, the base64 encoding of the text using the Go Library "encoding/base64", the base64 encoding of the text using the algorithm implemented from scratch, whether or not the two separate implementations match, and the time taken, in microseconds, for each algorithm to process the request.
 
 About:
-	Created 10/21/2019 by Nicholas Castelli for Meshify
+	Created 10/21/2019 by Nicholas Castelli
