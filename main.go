@@ -7,11 +7,79 @@ import (
 	"os"
 	"strings"
 	"time"
+    "log"
+	"net/http"
+	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{
+    ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+  	CheckOrigin: func(r *http.Request) bool { return true },
+}
+
+// define a reader which will listen for
+// new messages being sent to our WebSocket
+// endpoint
+func reader(conn *websocket.Conn) {
+    for {
+    // read in a message
+        messageType, p, err := conn.ReadMessage()
+        if err != nil {
+            log.Println(err)
+            return
+        }
+    // print out that message for clarity
+        fmt.Println(string(p))
+
+        if err := conn.WriteMessage(messageType, p); err != nil {
+            log.Println(err)
+            return
+        }
+
+    }
+}
+
+// define our WebSocket endpoint
+func serveWs(w http.ResponseWriter, r *http.Request) {
+    fmt.Println(r.Host)
+
+  // upgrade this connection to a WebSocket
+  // connection
+    ws, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        log.Println(err)
+  }
+  // listen indefinitely for new messages coming
+  // through on our WebSocket connection
+    reader(ws)
+}
+
+func setupRoutes() {
+  http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "Simple Server")
+  })
+  // make our `/ws` endpoint to the `serveWs` function
+	http.HandleFunc("/ws", serveWs)
+	http.HandleFunc("/touch", touchREST)
+}
+
+func touchREST(w http.ResponseWriter, r *http.Request) {
+	AddCors(&w)
+
+	fmt.Print("I'm touched!")
+}
 
 func main() {
 
+	setupRoutes()
+    log.Fatal(http.ListenAndServe(":8080", nil))
+	
+}
+
+func oldMainCode() {
 	// Ingest data through console
+	// -new- will have to get user value from UI
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter text to Encode to Base64: ")
 	text, _ := reader.ReadString('\n')
@@ -44,7 +112,10 @@ func main() {
 	// Printing run time for statistics
 	fmt.Printf("Encoding to Base64 with Golang library took %s. While encoding to Base64 with Implemented Algorithm took %s .", elapsedLib, elapsedImp)
 	fmt.Println()
-	
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
 func libraryEncode(msg string) string{
@@ -112,4 +183,11 @@ func compareImplementations(implemented string, library string ) bool{
 	}
 
 	return flag
+}
+
+func AddCors(w *http.ResponseWriter) {
+	//Allow CORS here By * or specific origin
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
