@@ -3,14 +3,21 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"bufio"
-	"os"
-	"strings"
+	// "bufio"
+	// "os"
+	// "strings"
+	"strconv"
+	"encoding/json"
 	"time"
     "log"
 	"net/http"
 	"github.com/gorilla/websocket"
 )
+
+// FetchCall data struct
+type FetchCall struct {
+	Content string `json:"content"`
+}
 
 var upgrader = websocket.Upgrader{
     ReadBufferSize:  1024,
@@ -67,7 +74,33 @@ func setupRoutes() {
 func touchREST(w http.ResponseWriter, r *http.Request) {
 	AddCors(&w)
 
-	fmt.Print("I'm touched!")
+	decoder := json.NewDecoder(r.Body)
+	fmt.Println(r.Body)
+	var data FetchCall
+	err := decoder.Decode(&data)
+	if err != nil {
+		panic(err)
+	}
+	//data is correct for the time being
+	fmt.Println(data.Content)
+	value, ok := strconv.Atoi(data.Content)
+
+	if ok != nil {
+		log.Println("conversion error")
+	}
+
+	fmt.Println(value)
+	fmt.Println("newline")
+	//should be sending the value we get from the front end, hard coded for now
+	text := oldMainCode("hello")
+
+	json.NewEncoder(w).Encode(text)
+
+	pagesJson, err := json.Marshal(text)
+	if err != nil {
+		log.Fatal("Cannot encode to JSON ", err)
+	}
+	fmt.Printf("%s", pagesJson)
 }
 
 func main() {
@@ -77,15 +110,16 @@ func main() {
 	
 }
 
-func oldMainCode() {
+func oldMainCode(input string) string{
 	// Ingest data through console
 	// -new- will have to get user value from UI
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter text to Encode to Base64: ")
-	text, _ := reader.ReadString('\n')
+	// reader := bufio.NewReader(os.Stdin)
+	// fmt.Print("Enter text to Encode to Base64: ")
+	// text, _ := reader.ReadString('\n')
 
 	// Remove Carriage Return from ingested data
-	text = strings.TrimSuffix(text, "\n")
+	// text = strings.TrimSuffix(text, "\n")
+	text := input
 
 	// Begin clock for golang library
 	startLib := time.Now()
@@ -112,6 +146,8 @@ func oldMainCode() {
 	// Printing run time for statistics
 	fmt.Printf("Encoding to Base64 with Golang library took %s. While encoding to Base64 with Implemented Algorithm took %s .", elapsedLib, elapsedImp)
 	fmt.Println()
+
+	return libraryEncode
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
