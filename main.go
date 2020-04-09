@@ -6,7 +6,7 @@ import (
 	// "bufio"
 	// "os"
 	// "strings"
-	"strconv"
+	"io"
 	"encoding/json"
 	"time"
     "log"
@@ -75,32 +75,29 @@ func touchREST(w http.ResponseWriter, r *http.Request) {
 	AddCors(&w)
 
 	decoder := json.NewDecoder(r.Body)
-	fmt.Println(r.Body)
+
 	var data FetchCall
+
 	err := decoder.Decode(&data)
+
 	if err != nil {
 		panic(err)
 	}
-	//data is correct for the time being
-	fmt.Println(data.Content)
-	value, ok := strconv.Atoi(data.Content)
+	
+	text := oldMainCode(data.Content)
 
-	if ok != nil {
-		log.Println("conversion error")
-	}
+	// wring the text to the response writer
+	io.WriteString(w, string(text))
 
-	fmt.Println(value)
-	fmt.Println("newline")
-	//should be sending the value we get from the front end, hard coded for now
-	text := oldMainCode("hello")
+	// below is for if we want to return as a JSON, going to just send as string for now
+	//json.NewEncoder(w).Encode(text)
 
-	json.NewEncoder(w).Encode(text)
-
-	pagesJson, err := json.Marshal(text)
+	// Commenting out this below for now since we're not sending the response as a JSON
+	/*pagesJson, err := json.Marshal(text)
 	if err != nil {
 		log.Fatal("Cannot encode to JSON ", err)
 	}
-	fmt.Printf("%s", pagesJson)
+	fmt.Printf("%s", pagesJson)*/
 }
 
 func main() {
