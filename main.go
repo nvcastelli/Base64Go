@@ -68,10 +68,10 @@ func setupRoutes() {
   })
   // make our `/ws` endpoint to the `serveWs` function
 	http.HandleFunc("/ws", serveWs)
-	http.HandleFunc("/touch", touchREST)
+	http.HandleFunc("/encode", encodeREST)
 }
 
-func touchREST(w http.ResponseWriter, r *http.Request) {
+func encodeREST(w http.ResponseWriter, r *http.Request) {
 	AddCors(&w)
 
 	decoder := json.NewDecoder(r.Body)
